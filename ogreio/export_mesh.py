@@ -111,11 +111,30 @@ class ExportOGREMesh(bpy.types.Operator):
         # scene = bpy.context.scene
         # selectedObject = scene.objects.active
 
+        # hack, maybe add checkbox to script execution menu
+        # for now all "apply" options are applied in blender, if the user wants to continue working with modifiers and transforms not applied, he has to revert to a saved state
+        # another option would be to create temporary duplicates, apply the modifiers to those, and export those, but that could take a lot of work, so this will have to do for now
+        apply_transformations = True
+        apply_modifiers = True
+
+        # apply all transformations, permanently (see above)
+        if apply_transformations:
+            bpy.ops.object.location_apply()
+            bpy.ops.object.rotation_apply()
+            bpy.ops.object.scale_apply()
+            bpy.ops.object.visual_transform_apply()
+
         # Find all of the selected objects
         selectedObjects = []
         for obj in bpy.data.objects:
             if obj.select:
                 selectedObjects.append(obj)
+
+                # apply all modifiers, permanently (see above)
+                if apply_modifiers:
+                    bpy.context.scene.objects.active = obj
+                    for modifier in [m.name for m in obj.modifiers]:
+                        bpy.ops.object.modifier_apply(apply_as="DATA",modifier=modifier)
 
         # For now, one and only one objects can be selected
         if len(selectedObjects) != 1:
@@ -151,8 +170,8 @@ class ExportOGREMesh(bpy.types.Operator):
 
             # Create the submesh node
             submesh_attributes = {
-                "usesharedvertices" : "false", 
-                "use32bitindexes" : "false", 
+                "usesharedvertices" : "false",
+                "use32bitindexes" : "false",
                 "operationtype" : "triangle_list"
             }
 
